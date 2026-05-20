@@ -161,6 +161,49 @@ int main() {
                 pianificaIntervento(&sistema, id_r, id_t, d, f);
                 break;
             }
+            case 6: {
+                int id_r, st;
+                printf("ID Richiesta da modificare: "); scanf("%d", &id_r);
+                printf("Nuovo stato (1=PIANIF, 2=IN_LAV, 3=CONCLUSA, 4=ANNULLATA): "); scanf("%d", &st);
+
+                // Cerca nell'Heap
+                Richiesta* r = cercaRichiestaInHeap(&sistema, id_r);
+                if (r) {
+                    r->stato = (StatoRichiesta)st;
+                    printf("[OK] Stato aggiornato.\n");
+
+                    // LOGICA DI ARCHIVIAZIONE TRANSAZIONALE
+                    // Se l'intervento è finito (Stato 3 o 4), deve "morire" nell'Heap e "rinascere" nel BST Storico.
+                    if (st == 3 || st == 4) {
+                        archiviaNelloStorico(&sistema, r);      // 1. Aggiungo copia puntatore al BST
+                        rimuoviRichiestaDaHeap(&sistema, id_r); // 2. Rimuovo puntatore dall'array Heap (senza fare la free)
+                        printf("[INFO] Elemento estratto dalla Priority Queue e archiviato nel BST.\n");
+                    }
+                } else {
+                    printf("[ERRORE] Richiesta non trovata tra le attive.\n");
+                }
+                break;
+            }
+            case 7: {
+                int id_cerca;
+                printf("ID Richiesta da cercare: "); scanf("%d", &id_cerca);
+
+                // Provo prima a cercare nel BST dello Storico (Ricerca Binaria O(log N) -> Velocissima)
+                Richiesta* r_st = cercaStoricoBST(sistema.bst_storico_root, id_cerca);
+                if (r_st) {
+                    printf("[BST STORICO] App: %s | Stato: %s\n", r_st->appartamento, strStato(r_st->stato));
+                } else {
+                    // Se non c'è, provo nell'Heap (Ricerca Lineare O(N) -> Più lenta)
+                    Richiesta* r_att = cercaRichiestaInHeap(&sistema, id_cerca);
+                    if (r_att) {
+                        printf("[HEAP ATTIVE] App: %s | Urgenza: %s\n", r_att->appartamento, strUrg(r_att->urgenza));
+                    } else {
+                        printf("Nessuna corrispondenza trovata in nessun DB.\n");
+                    }
+                }
+                break;
+            }
+
 
 
     }
