@@ -203,6 +203,34 @@ int main() {
                 }
                 break;
             }
+            case 8: {
+                            printf("\n=== CARICO LAVORO (Scansione Hash Table) ===\n");
+                            // Dobbiamo scorrere fisicamente tutto l'array (tutti i 100 buckets)
+                            for (int i = 0; i < HASH_SIZE; i++) {
+                                Tecnico* t = sistema.hash_tecnici[i];
+                                // E per ogni bucket, esplorare le eventuali collisioni incatenate
+                                while (t != NULL) {
+                                    int count = 0;
+                                    InterventoPianificato* ag = t->agenda;
+                                    // Conto quante volte scendo nella lista concatenata della sua agenda
+                                    while(ag) { count++; ag = ag->next; }
+                                    
+                                    printf("- %s (#%d) | Interventi: %d | Residente al Bucket (Hash Index): %d\n",
+                                           t->nome, t->id_tecnico, count, i);
+                                    t = t->next;
+                                }
+                            }
+                            break;
+                        }
+                        case 9: {
+                            int attive = sistema.heap_size; // L'array sa già quanto è grande, tempo O(1)
+                            int storiche = contaNodiBST(sistema.bst_storico_root); // Il BST non lo sa, va ricalcolato ricorsivamente, tempo O(N)
+                            
+                            printf("\n>>> REPORT GLOBALE <<<\n");
+                            printf("- Interventi attivi (Heap): %d\n", attive);
+                            printf("- Interventi archiviati (BST): %d\n", storiche);
+                            break;
+                        }
 
 
 
