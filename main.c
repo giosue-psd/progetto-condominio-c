@@ -124,6 +124,23 @@ int main() {
                 registraTecnicoHash(&sistema, id, nome, spec, disp == 1);
                 break;
             }
+            case 3: {
+                            printf("\n=== RICHIESTE ATTIVE (Heap Array) ===\n");
+                            if (sistema.heap_size == 0) {
+                                printf("Nessuna richiesta in coda.\n");
+                            } else {
+                                // Stampa sequenziale l'array sottostante.
+                                // NOTA: l'indice [0] contiene sempre il MAX assoluto. Gli altri seguono una struttura parzialmente ordinata.
+                                for(int i = 0; i < sistema.heap_size; i++) {
+                                    Richiesta* r = sistema.heap_richieste[i];
+                                    // Operatore ternario di C: se tecnico è diverso da NULL stampane il nome, altrimenti scrivi "Nessuno"
+                                    const char* nome_tec = (r->tecnico_assegnato) ? r->tecnico_assegnato->nome : "Nessuno";
+                                    printf("[%d] ID: %d | Urgenza: %s | Tipo: %s | Tec: %s\n",
+                                           i, r->id_richiesta, strUrg(r->urgenza), r->tipologia, nome_tec);
+                                }
+                            }
+                            break;
+                        }
 
 
     }
