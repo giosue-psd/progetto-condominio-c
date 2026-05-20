@@ -141,6 +141,26 @@ int main() {
                             }
                             break;
                         }
+case 4: {
+                printf("\n=== STORICO INTERVENTI (BST In-Order Traversal) ===\n");
+                if (sistema.bst_storico_root == NULL) {
+                    printf("Lo storico e' vuoto.\n");
+                } else {
+                    stampaBST(sistema.bst_storico_root);
+                }
+                break;
+            }
+            case 5: {
+                int id_r, id_t, oi, of; Data d;
+                printf("ID Richiesta: "); scanf("%d", &id_r);
+                printf("ID Tecnico: "); scanf("%d", &id_t);
+                printf("Data (GG MM AAAA): "); scanf("%d %d %d", &d.giorno, &d.mese, &d.anno);
+                printf("Fascia (es. 900 1100): "); scanf("%d %d", &oi, &of);
+
+                FasciaOraria f = {oi, of};
+                pianificaIntervento(&sistema, id_r, id_t, d, f);
+                break;
+            }
 
 
     }
