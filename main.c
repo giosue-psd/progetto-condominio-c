@@ -79,6 +79,53 @@ int main() {
         printf("Scegli un'opzione: ");
         scanf("%d", &scelta);
 
+        switch(scelta) {
+            case 1: {
+                // Buffer temporanei per l'input da tastiera
+                char app[50], tipo[50], desc[255];
+                int u, st; Data d;
+
+                // Spiegazione di " %[^\n]": La scansione salta gli spazi iniziali rimasti nel buffer (il \n precedente)
+                // e legge un'intera frase finché non premiamo invio (cattura anche gli spazi interni come "Elettricista Urgente").
+                printf("Appartamento: "); scanf(" %[^\n]", app);
+                printf("Tipologia: "); scanf(" %[^\n]", tipo);
+                printf("Descrizione: "); scanf(" %[^\n]", desc);
+                printf("Data (GG MM AAAA): "); scanf("%d %d %d", &d.giorno, &d.mese, &d.anno);
+                printf("Urgenza (0=BASSA, 1=MEDIA, 2=ALTA, 3=CRITICA): "); scanf("%d", &u);
+                printf("Stato (0=APERTA, 1=PIANIF., 2=LAVORAZ.): "); scanf("%d", &st);
+
+                // Allocazione struttura reale sulla RAM Dinamica (Heap del Sistema Operativo)
+                Richiesta* nuova = (Richiesta*)malloc(sizeof(Richiesta));
+                
+                // Popolamento dei dati
+                nuova->id_richiesta = sistema.contatore_richieste++; // Assegna e POI incrementa (suffisso)
+                strcpy(nuova->appartamento, app);
+                strcpy(nuova->tipologia, tipo);
+                strcpy(nuova->descrizione, desc);
+                nuova->data_richiesta = d;
+                nuova->urgenza = (Urgenza)u;     // Casting esplicito da int a Enum
+                nuova->urgenza_val = u;          // Salvo numerico per l'algoritmo matematico del Max-Heap
+                nuova->stato = (StatoRichiesta)st;
+                nuova->tecnico_assegnato = NULL; // Default
+
+                // Invio alla struttura dati Heap
+                inserisciRichiestaHeap(&sistema, nuova);
+                break;
+            }
+            case 2: {
+                char nome[100], spec[50]; int id, disp;
+
+                printf("ID Tecnico: "); scanf("%d", &id);
+                printf("Nome: "); scanf(" %[^\n]", nome);
+                printf("Specializzazione: "); scanf(" %[^\n]", spec);
+                printf("Disponibile (1=Si, 0=No): "); scanf("%d", &disp);
+
+                // Passa "disp == 1" che restituisce true se l'utente ha digitato 1, altrimenti false
+                registraTecnicoHash(&sistema, id, nome, spec, disp == 1);
+                break;
+            }
+
+
     }
     return 0; 
 }
