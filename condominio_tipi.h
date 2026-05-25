@@ -1,3 +1,4 @@
+//SCRITTO DA GIOSUE' SENATORE
 #ifndef CONDOMINIO_TIPI_H // Guardia d'inclusione: impedisce che questo file venga incluso più volte causando errori di compilazione
 #define CONDOMINIO_TIPI_H
 

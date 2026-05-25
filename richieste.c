@@ -1,3 +1,4 @@
+//SCRITTO DA GIOSUE' SENATORE
 #include "richieste.h"
 
 /*

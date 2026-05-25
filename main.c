@@ -231,9 +231,13 @@ int main() {
                             printf("- Interventi archiviati (BST): %d\n", storiche);
                             break;
                         }
-
-
-
+	case 0:
+                printf("Chiusura in corso. Invocazione Memory Cleaner...\n");
+                liberaSistema(&sistema); // IMPORTANTISSIMO chiamarlo prima che il main termini
+                break;
+            default:
+                printf("Scelta errata. Inserire numero valido.\n");
+        }
     }
-    return 0; 
+    return 0; // Uscita pulita dal programma verso il Sistema Operativo
 }
