@@ -1,95 +1,151 @@
-//SCRITTO DA GIOSUE' SENATORE
+/* ==============================================================================
+ * Scritto da Giosuè Senatore
+ * Scopo: Implementazione delle logiche operative per la gestione della Coda di 
+ * Priorità (Max-Heap) delle richieste. Contiene gli algoritmi di bilanciamento
+ * dell'albero e le utility di interfaccia.
+ * ============================================================================== */
+
 #include "richieste.h"
 
 /*
- * FUNZIONE: heapifyUp
- * COSA FA: Quando inseriamo un elemento alla fine dell'array (foglia), questo potrebbe violare
- * la regola del Max-Heap (i padri devono essere >= dei figli).
- * Questa funzione fa "risalire" (swap) l'elemento verso la radice finché la regola non è ripristinata.
- * COMPLESSITÀ: O(log N)
+ * Funzione: heapifyUp
+ * Descrizione: Ripristina la proprietà strutturale del Max-Heap. Nelle code di priorità, 
+ * ogni nodo genitore deve avere un'urgenza maggiore o uguale a quella dei figli.
+ * Se un nodo appena inserito vìola questa regola, viene "fatto galleggiare" 
+ * (scambiato) verso la radice.
+ * Parametri:
+ * - sys: Puntatore all'istanza globale del sistema condominio.
+ * - index: Indice dell'array corrispondente al nodo da valutare.
+ * Pre-condizione: L'array heap_richieste contiene dati validi fino a heap_size.
+ * Post-condizione: L'elemento all'indice 'index' e i suoi antenati rispettano l'ordinamento Max-Heap.
+ * Ritorna: void (nessun valore).
  */
 void heapifyUp(SistemaCondominio* sys, int index) {
-    if (index == 0) return; // Caso base ricorsione: siamo arrivati alla radice (indice 0)
+    // Caso base della ricorsione: se l'indice è 0, siamo alla radice e non ci sono padri con cui scambiare.
+    if (index == 0) return; 
     
-    // In un array Heap, il padre di un nodo 'i' si trova all'indice (i-1)/2
+    // In una rappresentazione array di un albero binario completo, l'indice del genitore
+    // si calcola matematicamente come (indice_figlio - 1) diviso 2.
     int parentIndex = (index - 1) / 2;
     
-    // Se l'urgenza del nodo attuale è MAGGIORE di quella del padre, violiamo la regola. Facciamo Swap!
+    // Confronto l'urgenza numerica: se il figlio è più urgente del padre, la regola è violata e serve uno swap.
     if (sys->heap_richieste[index]->urgenza_val > sys->heap_richieste[parentIndex]->urgenza_val) {
-        // Scambio i puntatori
+        
+        // Esecuzione dello scambio dei puntatori in memoria
         Richiesta* temp = sys->heap_richieste[index];
         sys->heap_richieste[index] = sys->heap_richieste[parentIndex];
         sys->heap_richieste[parentIndex] = temp;
         
-        // Continuo a controllare ricorsivamente verso l'alto
+        // Propagazione ricorsiva: controllo se il nodo appena salito viola la regola col suo nuovo padre.
         heapifyUp(sys, parentIndex);
     }
 }
 
 /*
- * FUNZIONE: inserisciRichiestaHeap
- * COSA FA: Aggiunge la richiesta in fondo all'array e poi riordina la struttura per mantenere l'albero bilanciato.
+ * Funzione: inserisciRichiestaHeap
+ * Descrizione: Registra una nuova richiesta inserendola nella Coda di Priorità.
+ * Per mantenere prestazioni logaritmiche O(log N), l'inserimento avviene 
+ * in coda all'array e l'albero viene successivamente ribilanciato.
+ * Parametri:
+ * - sys: Puntatore all'istanza del sistema.
+ * - nuova: Puntatore alla struttura Richiesta pronta per l'inserimento.
+ * Pre-condizione: sys->heap_size deve essere strettamente minore di MAX_HEAP_CAPACITY.
+ * Post-condizione: L'array si espande di 1 elemento, la richiesta è allocata 
+ * e l'ordinamento per priorità è garantito.
+ * Ritorna: void.
  */
 void inserisciRichiestaHeap(SistemaCondominio* sys, Richiesta* nuova) {
-    // Controllo overflow (evita Segmentation Fault)
+    // Salvaguardia strutturale: previene errori di Segmentazione (Buffer Overflow) se la coda è piena.
     if (sys->heap_size >= MAX_HEAP_CAPACITY) {
         printf("[ERRORE] Heap pieno! Non si possono accodare altre richieste.\n");
         return;
     }
     
-    // 1. Inseriamo il nuovo elemento nella prima posizione libera (alla fine dell'array)
+    // Inserimento alla prima posizione libera alla fine del vettore (foglia dell'albero).
     sys->heap_richieste[sys->heap_size] = nuova;
     
-    // 2. Chiamiamo heapifyUp per far "galleggiare" il nuovo elemento se è molto urgente
+    // Ribliciamento dell'albero dal basso verso l'alto per onorare l'urgenza.
     heapifyUp(sys, sys->heap_size);
     
-    // 3. Aggiorniamo la dimensione totale dell'array
     sys->heap_size++;
     
     printf("[OK] Richiesta #%d accodata in Priority Queue (Heap).\n", nuova->id_richiesta);
 }
 
 /*
- * FUNZIONE: cercaRichiestaInHeap
- * COSA FA: Cerca una richiesta per ID scorrendo linearmente l'array.
- * COMPLESSITÀ: O(N). (L'Heap è eccellente per trovare il "Massimo", ma inefficace per cercare un elemento casuale).
+ * Funzione: cercaRichiestaInHeap
+ * Descrizione: Cerca il riferimento fisico di una richiesta attiva basandosi sul suo ID.
+ * Nota Architetturale: L'Heap non è ordinato per ID, ma per urgenza. 
+ * Pertanto è obbligatorio usare una ricerca lineare O(N) su tutto l'array.
+ * Parametri:
+ * - sys: Puntatore all'istanza del sistema.
+ * - id: L'identificativo numerico univoco della richiesta.
+ * Pre-condizione: Nessuna.
+ * Post-condizione: L'heap non subisce alterazioni (sola lettura).
+ * Ritorna: Il puntatore alla Richiesta se l'ID viene trovato, altrimenti NULL.
  */
 Richiesta* cercaRichiestaInHeap(SistemaCondominio* sys, int id) {
+    // Scansione completa dell'array fino al riempimento attuale.
     for (int i = 0; i < sys->heap_size; i++) {
-        if (sys->heap_richieste[i]->id_richiesta == id) return sys->heap_richieste[i];
+        if (sys->heap_richieste[i]->id_richiesta == id) {
+            return sys->heap_richieste[i];
+        }
     }
     return NULL;
 }
 
 /*
- * FUNZIONE: rimuoviRichiestaDaHeap
- * COSA FA: Estrae un nodo in qualsiasi posizione. È usata quando una richiesta viene conclusa/annullata.
+ * Funzione: rimuoviRichiestaDaHeap
+ * Descrizione: Elimina una richiesta specifica dall'array mantenendo compatto l'Heap.
+ * Questa logica viene innescata in fase di transizione di stato 
+ * (es. avanzamento a CONCLUSA o ANNULLATA).
+ * Parametri:
+ * - sys: Puntatore all'istanza del sistema.
+ * - id: L'identificativo numerico da espellere.
+ * Pre-condizione: L'ID passato deve esistere nell'Heap.
+ * Post-condizione: Dimensione dell'heap ridotta di 1, nodo eliminato, assenza di "buchi" 
+ * nell'array e parziale riordino applicato.
+ * Ritorna: void.
  */
 void rimuoviRichiestaDaHeap(SistemaCondominio* sys, int id) {
     int index = -1;
-    // 1. Trovo la posizione dell'elemento da cancellare
+    
+    // Ricerca lineare per individuare la posizione fisica dell'elemento da rimuovere.
     for (int i = 0; i < sys->heap_size; i++) {
         if (sys->heap_richieste[i]->id_richiesta == id) {
             index = i;
             break;
         }
     }
-    if (index == -1) return; // Non trovato
+    
+    // Se l'elemento non è in coda, l'operazione si interrompe silenziosamente.
+    if (index == -1) return; 
 
-    // 2. Copio l'ULTIMO elemento dell'heap nella posizione dell'elemento da eliminare
+    // Tecnica di ricompattamento: sovrascrivo l'elemento bersaglio con l'ultimo nodo dell'array.
     sys->heap_richieste[index] = sys->heap_richieste[sys->heap_size - 1];
     
-    // 3. Decremento la grandezza (di fatto ignorando l'ultimo elemento ormai clonato)
+    // Decremento la dimensione (l'ultimo nodo "scompare" logicamente).
     sys->heap_size--;
     
-    // 4. Ripristino l'ordine (sarebbe completa con heapifyDown, qui usiamo Up per semplificare)
+    // Ripristino l'ordinamento. (Nota: per una rimozione completa servirebbe anche heapifyDown,
+    // ma per semplicità didattica qui viene forzato il controllo verso l'alto).
     if (index < sys->heap_size) {
         heapifyUp(sys, index); 
     }
 }
 
-// --- FUNZIONI UTILITY (Formattazione visiva) ---
 
+/* ==============================================================================
+ * FUNZIONI DI UTILITÀ (FORMATTAZIONE VISIVA)
+ * ============================================================================== */
+
+/*
+ * Funzione: strStato
+ * Descrizione: Funzione di mappatura che trasforma l'enum di stato della memoria 
+ * in una stringa leggibile (UI mapping).
+ * Parametri: s (StatoRichiesta enum)
+ * Ritorna: Stringa costante mappata.
+ */
 const char* strStato(StatoRichiesta s) {
     switch(s) {
         case APERTA: return "APERTA";
@@ -101,6 +157,13 @@ const char* strStato(StatoRichiesta s) {
     }
 }
 
+/*
+ * Funzione: strUrg
+ * Descrizione: Funzione di mappatura che trasforma l'enum di urgenza della memoria 
+ * in una stringa leggibile per i report visivi.
+ * Parametri: u (Urgenza enum)
+ * Ritorna: Stringa costante mappata.
+ */
 const char* strUrg(Urgenza u) {
     switch(u) {
         case BASSA: return "BASSA";
