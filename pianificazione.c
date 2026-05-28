@@ -73,4 +73,5 @@ bool pianificaIntervento(SistemaCondominio* sys, int id_richiesta, int id_tecnic
     printf("[OK] Intervento #%d assegnato a %s con successo.\n", id_richiesta, t->nome);
     return true;
 }
-}
+
+
