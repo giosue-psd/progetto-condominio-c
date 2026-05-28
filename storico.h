@@ -1,6 +1,8 @@
 #ifndef STORICO_H
 #define STORICO_H
 
+//Scritto da Manuel Vitolo
+
 #include "condominio_tipi.h"
 #include "richieste.h"
 
