@@ -1,4 +1,3 @@
-/*scritto da Jacopo Salimbene */
 /* ==============================================================================
  * FILE: main.c
  * SCOPO: Gestione CLI e orchestrazione dei sottomoduli.
