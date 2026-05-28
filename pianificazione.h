@@ -1,27 +1,34 @@
-/* * Autore: Jacopo Salimbene
- * File: pianificazione.h
- * Descrizione: Interfaccia per la gestione e la pianificazione degli 
- * interventi di manutenzione all'interno del condominio.
+/* * Progetto: Sistema Gestione Condominio
+ * Autore: Jacopo Salimbene
+ *
+ * Descrizione: Questo modulo espone l'interfaccia pubblica per fissare
+ * gli interventi manutentivi. Isola la logica di assegnazione temporale
+ * per centralizzare i controlli anti-sovrapposizione dei tecnici.
  */
 
 #ifndef PIANIFICAZIONE_H
-#define PIANIFICAZIONE_H // Direttiva di inclusione condizionale (Inclusion Guard) per evitare inclusioni multiple del file header
+#define PIANIFICAZIONE_H
 
-/* --- Inclusioni delle dipendenze del modulo --- */
-#include "condominio_tipi.h"  // Contiene la definizione della struttura principale 'SistemaCondominio'
-#include "richieste.h"         // Contiene le definizioni e i tipi relativi alle richieste di intervento
-#include "tecnici.h"           // Contiene le definizioni e i tipi relativi all'anagrafica dei tecnici
+#include "condominio_tipi.h"
+#include "richieste.h"
+#include "tecnici.h"
 
-/**
- * @brief Pianifica un intervento di manutenzione nel sistema assegnando un tecnico e una data.
- * * @param sys          Puntatore alla struttura principale del sistema condominio (modificata internamente).
- * @param id_richiesta Identificativo univoco della richiesta di intervento da pianificare.
- * @param id_tecnico   Identificativo univoco del tecnico a cui assegnare l'intervento.
- * @param d            Struttura contenente la data stabilita per l'intervento (passata per valore).
- * @param fascia       Fascia oraria della giornata scelta per l'intervento (es. Mattina/Pomeriggio).
- * * @return true        Se la pianificazione è andata a buon fine (richiesta e tecnico validi, nessuna sovrapposizione).
- * @return false       Se si sono verificati errori o conflitti di disponibilità (es. tecnico già occupato).
+/*
+ * * Funzione: pianificaIntervento
+ * * Scopo: Registra l'assegnazione di un tecnico a una specifica richiesta.
+ * Inserisce l'evento nell'agenda globale per bloccare lo slot orario.
+ *
+ * * Parametri:
+ * sys: Struttura centrale del condominio; memorizza il nuovo stato.
+ * id_richiesta: Chiave della richiesta; deve essere in stato 'aperta'.
+ * id_tecnico: Chiave del tecnico; deve possedere la qualifica richiesta.
+ * d: Giorno concordato per l'esecuzione del lavoro.
+ * fascia: Periodo del giorno destinato all'intervento.
+ *
+ * * Ritorno:
+ * true: Assegnazione riuscita e slot orario validato con successo.
+ * false: Conflitto di orario del tecnico o ID non trovati nel sistema.
  */
 bool pianificaIntervento(SistemaCondominio* sys, int id_richiesta, int id_tecnico, Data d, FasciaOraria fascia);
 
-#endif // PIANIFICAZIONE_H Fine della guardia di inclusione
+#endif
