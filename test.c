@@ -1,18 +1,13 @@
-/* ==============================================================================
- * FILE: main.c (VERSIONE TEST AUTOMATIZZATI)
- * SCOPO: Eseguire tutti i test possibili sulle strutture dati (Heap, Hash, BST) 
- * e sulle logiche di business (Pianificazione) senza input manuale.
- * ============================================================================== */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "condominio_tipi.h"
 #include "richieste.h"
 #include "tecnici.h"
 #include "pianificazione.h"
 #include "storico.h"
 
-// ==============================================================================
-// FUNZIONI DI GESTIONE SISTEMA (Mantenute dal vecchio main)
-// ==============================================================================
-
+// Funzioni di utilità per inizializzare e liberare la memoria copiate dal tuo main originale
 void inizializzaSistema(SistemaCondominio* sys) {
     sys->heap_size = 0;             
     sys->bst_storico_root = NULL;   
@@ -27,10 +22,8 @@ void liberaSistema(SistemaCondominio* sys) {
         free(sys->heap_richieste[i]);
     }
     sys->heap_size = 0;
-
     liberaBST(sys->bst_storico_root);
     sys->bst_storico_root = NULL;
-
     for (int i = 0; i < HASH_SIZE; i++) {
         Tecnico* curr_t = sys->hash_tecnici[i];
         while (curr_t != NULL) {
@@ -38,7 +31,7 @@ void liberaSistema(SistemaCondominio* sys) {
             while (curr_i != NULL) {
                 InterventoPianificato* temp_i = curr_i;
                 curr_i = curr_i->next;
-                free(temp_i); 
+                free(temp_i);
             }
             Tecnico* temp_t = curr_t;
             curr_t = curr_t->next;
@@ -46,147 +39,97 @@ void liberaSistema(SistemaCondominio* sys) {
         }
         sys->hash_tecnici[i] = NULL;
     }
-    printf("\n[SISTEMA] Garbage Collection manuale terminata. Memoria liberata senza leak.\n");
 }
 
-// ==============================================================================
-// FUNZIONE HELPER PER AUTOMATIZZARE L'INSERIMENTO DELLE RICHIESTE
-// ==============================================================================
-void test_CreaRichiesta(SistemaCondominio* sys, const char* app, const char* tipo, const char* desc, Data d, Urgenza u) {
-    Richiesta* nuova = (Richiesta*)malloc(sizeof(Richiesta));
-    nuova->id_richiesta = sys->contatore_richieste++; 
-    strcpy(nuova->appartamento, app);
-    strcpy(nuova->tipologia, tipo);
-    strcpy(nuova->descrizione, desc);
-    nuova->data_richiesta = d;
-    nuova->urgenza = u;
-    nuova->urgenza_val = (int)u;
-    nuova->stato = APERTA;
-    nuova->tecnico_assegnato = NULL;
-    inserisciRichiestaHeap(sys, nuova);
-}
-
-// ==============================================================================
-// FUNZIONE MAIN - ESECUZIONE TEST
-// ==============================================================================
 int main() {
     SistemaCondominio sistema;
     inizializzaSistema(&sistema);
 
-    printf("\n********************************************************\n");
-    printf("   AVVIO SUITE DI TEST AUTOMATIZZATI - SISTEMA CONDOMINIO   \n");
-    printf("********************************************************\n");
+    printf("\n================ AVVIO SUITE DI TEST ================\n");
 
-    // ---------------------------------------------------------
-    // TEST 1: INSERIMENTO TECNICI (Test Hash Table & Collisioni)
-    // ---------------------------------------------------------
-    printf("\n>>> TEST 1: REGISTRAZIONE TECNICI E COLLISIONI HASH\n");
-    // ID 5 e ID 105 finiranno nello stesso bucket (5 % 100 = 5 e 105 % 100 = 5). Testiamo la lista concatenata!
-    registraTecnicoHash(&sistema, 5, "Mario Rossi", "Idraulico", true);
-    registraTecnicoHash(&sistema, 105, "Luigi Verdi", "Elettricista", true);
-    registraTecnicoHash(&sistema, 12, "Gino Fabbro", "Fabbro", false); // NON disponibile
-    registraTecnicoHash(&sistema, 33, "Piero Tubi", "Idraulico", true);
-
-    // ---------------------------------------------------------
-    // TEST 2: INSERIMENTO RICHIESTE (Test Max-Heap Priority)
-    // ---------------------------------------------------------
-    printf("\n>>> TEST 2: INSERIMENTO RICHIESTE (Test Ordinamento Max-Heap)\n");
-    Data d1 = {10, 10, 2024};
-    Data d2 = {11, 10, 2024};
+    // --- TEST 1: Verifica della registrazione delle richieste ---
+    printf("\n[TEST 1] Inserimento Richieste (Heap) e Bilanciamento\n");
     
-    // Inseriamo con priorità miste per vedere se l'Heap fa "galleggiare" (HeapifyUp) le urgenze critiche
-    test_CreaRichiesta(&sistema, "Piano 1 - Int 2", "Idraulico", "Perdita lavandino", d1, BASSA);    // ID 1
-    test_CreaRichiesta(&sistema, "Piano 2 - Int 4", "Elettricista", "Blackout totale", d1, CRITICA); // ID 2
-    test_CreaRichiesta(&sistema, "Piano Terra", "Fabbro", "Serratura bloccata", d2, ALTA);           // ID 3
-    test_CreaRichiesta(&sistema, "Piano 3 - Int 6", "Idraulico", "Tubo rotto", d1, MEDIA);           // ID 4
+    Richiesta* r1 = (Richiesta*)malloc(sizeof(Richiesta));
+    r1->id_richiesta = sistema.contatore_richieste++;
+    strcpy(r1->appartamento, "Piano 1"); strcpy(r1->tipologia, "Elettrico");
+    r1->urgenza = BASSA; r1->urgenza_val = 0; r1->stato = APERTA; r1->tecnico_assegnato = NULL;
+    inserisciRichiestaHeap(&sistema, r1);
 
-    printf("\nVerifica Max-Heap attuale (In cima (Indice 0) DEVE esserci la richiesta CRITICA (ID 2)):\n");
-    for(int i = 0; i < sistema.heap_size; i++) {
-        printf("Indice [%d]: ID %d | Urgenza: %s | App: %s\n", 
-               i, sistema.heap_richieste[i]->id_richiesta, strUrg(sistema.heap_richieste[i]->urgenza), sistema.heap_richieste[i]->appartamento);
-    }
+    Richiesta* r2 = (Richiesta*)malloc(sizeof(Richiesta));
+    r2->id_richiesta = sistema.contatore_richieste++;
+    strcpy(r2->appartamento, "Piano 2"); strcpy(r2->tipologia, "Idraulico");
+    r2->urgenza = MEDIA; r2->urgenza_val = 1; r2->stato = APERTA; r2->tecnico_assegnato = NULL;
+    inserisciRichiestaHeap(&sistema, r2);
 
-    // ---------------------------------------------------------
-    // TEST 3: PIANIFICAZIONE E GESTIONE ERRORI
-    // ---------------------------------------------------------
-    printf("\n>>> TEST 3: PIANIFICAZIONE E CONTROLLO SICUREZZE\n");
-    FasciaOraria f1 = {900, 1100};  // 09:00 - 11:00
-    FasciaOraria f2 = {1000, 1200}; // 10:00 - 12:00 (In conflitto con f1)
-    FasciaOraria f3 = {1400, 1600}; // 14:00 - 16:00 (Nessun conflitto)
+    Richiesta* r3 = (Richiesta*)malloc(sizeof(Richiesta));
+    r3->id_richiesta = sistema.contatore_richieste++;
+    strcpy(r3->appartamento, "Piano 3"); strcpy(r3->tipologia, "Elettrico");
+    r3->urgenza = CRITICA; r3->urgenza_val = 3; r3->stato = APERTA; r3->tecnico_assegnato = NULL;
+    inserisciRichiestaHeap(&sistema, r3);
 
-    printf("\n- TEST 3A (Fallimento - Tecnico in ferie/malattia):\n");
-    pianificaIntervento(&sistema, 3, 12, d2, f1); // ID 3 a Gino Fabbro (ID 12, disp=false)
+    printf(">> Radice dell'Heap attuale (Max Priorita'): ID %d | Urgenza: %s\n", 
+           sistema.heap_richieste[0]->id_richiesta, strUrg(sistema.heap_richieste[0]->urgenza));
 
-    printf("\n- TEST 3B (Fallimento - Specializzazione Errata):\n");
-    pianificaIntervento(&sistema, 2, 5, d1, f1); // Blackout (Elettrico) a Mario Rossi (Idraulico)
+    // --- TEST 2: Test della registrazione dei tecnici ---
+    printf("\n[TEST 2] Registrazione Tecnici e Collisioni (Hash Table)\n");
+    // ID 105 e 205 causeranno una collisione intenzionale nell'indice 5
+    registraTecnicoHash(&sistema, 105, "Mario Rossi", "Elettrico", true);
+    registraTecnicoHash(&sistema, 205, "Luigi Verdi", "Idraulico", true);
+    registraTecnicoHash(&sistema, 305, "Gino Gialli", "Elettrico", false); // Tecnico in ferie
 
-    printf("\n- TEST 3C (Successo - Assegnazione Corretta):\n");
-    pianificaIntervento(&sistema, 2, 105, d1, f1); // Blackout (ID 2) a Luigi Verdi (ID 105) Elettricista
-    pianificaIntervento(&sistema, 1, 5, d1, f1);   // Lavandino (ID 1) a Mario Rossi (ID 5) Idraulico
-
-    printf("\n- TEST 3D (Fallimento - Conflitto Orario):\n");
-    pianificaIntervento(&sistema, 4, 5, d1, f2); // Tubo (ID 4) a Mario (ID 5) nello stesso giorno, orario sovrapposto
-
-    printf("\n- TEST 3E (Risoluzione Conflitto - Nuova fascia oraria):\n");
-    pianificaIntervento(&sistema, 4, 5, d1, f3); // Tubo (ID 4) a Mario (ID 5) al pomeriggio (Ok)
-
-    // ---------------------------------------------------------
-    // TEST 4: AVANZAMENTO STATO E ARCHIVIAZIONE NEL BST
-    // ---------------------------------------------------------
-    printf("\n>>> TEST 4: TRANSIZIONI DI STATO E STORICO (BST)\n");
+    // --- TEST 3: Verifica dell’assegnazione corretta ---
+    printf("\n[TEST 3] Assegnazione (Competenze e Disponibilita')\n");
+    Data d = {20, 10, 2024};
+    FasciaOraria f1 = {900, 1100};
     
-    // Aggiorno ID 2 in lavorazione (Resta nell'Heap)
-    Richiesta* r2 = cercaRichiestaInHeap(&sistema, 2);
-    if(r2) r2->stato = IN_LAVORAZIONE;
-    printf("[INFO] Richiesta #2 aggiornata a IN_LAVORAZIONE.\n");
-
-    // Aggiorno ID 1 a CONCLUSA -> Viene tolta dall'Heap e messa nel BST!
-    Richiesta* r1 = cercaRichiestaInHeap(&sistema, 1);
-    if(r1) {
-        r1->stato = CONCLUSA;
-        archiviaNelloStorico(&sistema, r1);
-        rimuoviRichiestaDaHeap(&sistema, 1);
-        printf("[INFO] Richiesta #1 CONCLUSA: rimossa dall'Heap, inserita nel BST Storico.\n");
-    }
-
-    // Aggiorno ID 3 ad ANNULLATA -> Viene tolta dall'Heap e messa nel BST!
-    Richiesta* r3 = cercaRichiestaInHeap(&sistema, 3);
-    if(r3) {
-        r3->stato = ANNULLATA;
-        archiviaNelloStorico(&sistema, r3);
-        rimuoviRichiestaDaHeap(&sistema, 3);
-        printf("[INFO] Richiesta #3 ANNULLATA: rimossa dall'Heap, inserita nel BST Storico.\n");
-    }
-
-    // ---------------------------------------------------------
-    // TEST 5: RICERCHE E REPORT
-    // ---------------------------------------------------------
-    printf("\n>>> TEST 5: REPORT E RICERCHE\n");
+    printf(">> Tentativo Elettrico su Idraulico: ");
+    pianificaIntervento(&sistema, r1->id_richiesta, 205, d, f1); // Fallisce
     
-    printf("\n--- CERCA ELEMENTO (ID 1, archiviato) ---\n");
-    Richiesta* search_bst = cercaStoricoBST(sistema.bst_storico_root, 1);
-    if(search_bst) printf("Trovato in Storico: App %s, Stato %s\n", search_bst->appartamento, strStato(search_bst->stato));
+    printf(">> Tentativo Tecnico Non Disponibile: ");
+    pianificaIntervento(&sistema, r1->id_richiesta, 305, d, f1); // Fallisce
 
-    printf("\n--- STAMPA STORICO BST (Ordinato per ID) ---\n");
-    stampaBST(sistema.bst_storico_root);
+    // --- TEST 4: Test della pianificazione e gestione conflitti ---
+    printf("\n[TEST 4] Pianificazione e Conflitti Orari\n");
+    printf(">> Assegnazione Valida: ");
+    pianificaIntervento(&sistema, r1->id_richiesta, 105, d, f1); // Passa
+    
+    FasciaOraria f2 = {1000, 1200}; // Si sovrappone a f1 (900-1100)
+    printf(">> Tentativo Conflitto Orario: ");
+    pianificaIntervento(&sistema, r3->id_richiesta, 105, d, f2); // Fallisce
 
-    printf("\n--- CARICO LAVORO TECNICI (Hash Table) ---\n");
-    for (int i = 0; i < HASH_SIZE; i++) {
-        Tecnico* t = sistema.hash_tecnici[i];
-        while (t != NULL) {
-            int count = 0;
-            InterventoPianificato* ag = t->agenda;
-            while(ag) { count++; ag = ag->next; }
-            if (count > 0 || !t->disponibile) { // Stampo solo se hanno lavori o sono non disponibili
-                printf("Tecnico: %s | Interventi Assegnati: %d | Disponibile: %s\n", 
-                       t->nome, count, t->disponibile ? "Si" : "No");
-            }
-            t = t->next;
-        }
-    }
+    // --- TEST 5: Verifica aggiornamento stato ---
+    printf("\n[TEST 5] Aggiornamento Stato e Transazione (Heap -> BST)\n");
+    r1->stato = CONCLUSA; // Modifico manualmente per test
+    archiviaNelloStorico(&sistema, r1);
+    rimuoviRichiestaDaHeap(&sistema, r1->id_richiesta);
+    printf(">> Richiesta ID %d spostata. Dimensione Heap attuale: %d\n", r1->id_richiesta, sistema.heap_size);
 
-    printf("\n>>> FINE TEST. AVVIO RILASCIO MEMORIA.\n");
+    // --- TEST 6: Test della ricerca e filtri ---
+    printf("\n[TEST 6] Ricerca in strutture multiple\n");
+    Richiesta* cerca_attiva = cercaRichiestaInHeap(&sistema, 2);
+    if(cerca_attiva) printf(">> ID 2 trovato in HEAP. Stato: %s\n", strStato(cerca_attiva->stato));
+    
+    Richiesta* cerca_storico = cercaStoricoBST(sistema.bst_storico_root, 1);
+    if(cerca_storico) printf(">> ID 1 trovato in BST. Stato: %s\n", strStato(cerca_storico->stato));
+
+    // --- TEST 7: Verifica dello storico interventi ---
+    printf("\n[TEST 7] Stampa Storico (Controllo Ordinamento)\n");
+    // Inserisco una richiesta fittizia per confermare l'ordinamento numerico
+    Richiesta* r4 = (Richiesta*)malloc(sizeof(Richiesta));
+    r4->id_richiesta = 99; strcpy(r4->appartamento, "Piano 10"); 
+    strcpy(r4->tipologia, "Test"); r4->stato = CONCLUSA; r4->tecnico_assegnato = NULL;
+    archiviaNelloStorico(&sistema, r4);
+    
+    stampaBST(sistema.bst_storico_root); // Dovrebbe stampare prima ID 1, poi ID 99
+
+    // --- TEST 8: Test della generazione dei report ---
+    printf("\n[TEST 8] Generazione Report Globale\n");
+    printf(">> Interventi attivi (Heap O(1)): %d\n", sistema.heap_size);
+    printf(">> Interventi archiviati (BST O(N)): %d\n", contaNodiBST(sistema.bst_storico_root));
+
+    printf("\n================ FINE TEST =================\n");
+    
     liberaSistema(&sistema);
-
     return 0;
 }
